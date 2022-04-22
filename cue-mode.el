@@ -71,7 +71,7 @@ Should be `cue' or the complete, absolute path to the `cue' executable on your s
                                            "<=" "?" "[" "]" "," "/" "|" "!~"
                                            ">=" "!" "_|_" "..." ".")))
 
-(defconst cue-mode-identifiers "\\(_?#?[a-zA-Z]+[a-zA-Z0-9]*\\??\\)[[:space:]]*\\(:|=\\)")
+(defconst cue-mode-identifiers "\\(_?#?[a-zA-Z]+[a-zA-Z0-9]*\\??\\)[[:space:]]*[:=]")
 (defconst cue-mode-quoted-string-re json-mode-quoted-string-re)
 (defconst cue-mode-quoted-key-re json-mode-quoted-key-re)
 (defconst cue-mode-number-re json-mode-number-re)
