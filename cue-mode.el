@@ -5,7 +5,7 @@
 ;; Author: Detlev Vandaele
 ;; URL: https://github.com/detvdl/cue-mode.el
 ;; Version: 0.0.1
-;; Package-Requires: ((json-mode "1.8.0") (emacs "24.4") (reformatter "0.3"))
+;; Package-Requires: ((flycheck "32") (json-mode "1.8.0") (emacs "24.4") (reformatter "0.3"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -26,13 +26,17 @@
 
 ;;; Code:
 
+(require 'flycheck)
 (require 'json-mode)
 (require 'reformatter)
 (require 'rx)
 
 (defgroup cue-mode '()
   "Major mode for editing CUE files."
-  :group 'json-mode)
+  :group 'json-mode
+  :prefix "cue-"
+  :link '(url-link :tag "Site" "https://github.com/detvdl/cue-mode.el")
+  :link '(url-link :tag "Repository" "https://github.com/detvdl/cue-mode.el"))
 
 (defcustom cue-command "cue"
   "Command used to interact with CUE files.
@@ -46,6 +50,12 @@ Should be `cue' or the complete, absolute path to the `cue' executable on your s
   :type 'boolean
   :group 'cue-mode
   :safe 'booleanp)
+
+(defcustom cue-vet-extra-arguments '()
+  "Extra arguments to be passed to `cue vet' commands used in Flycheck."
+  :type '(repeat string)
+  :group 'cue-mode
+  :safe 'listp)
 
 (reformatter-define cue-format
   :program cue-command
@@ -158,20 +168,19 @@ cue font lock syntactic face function."
    ((nth 4 state) font-lock-comment-face)))
 
 ;; Flycheck checker
-(flycheck-def-executable-var cue-checker cue-command)
+(flycheck-def-executable-var cue-checker 'cue-command)
 (flycheck-define-command-checker 'cue-checker
   "A CUE syntax checker using the CUE cli command.
 
 See URL `https://cuelang.org/'."
-  :command `(,cue-command "vet" source)
+  :command `(,cue-command "vet" ,@cue-vet-extra-arguments source)
   :error-patterns
-  '((error line-start (opt (or "#" "_#") (zero-or-more (not ":")) ": ") (message) ":" "\n"
+  '((warning line-start (message) "; use the -c flag to show errors or suppress this message"  line-end)
+    (error line-start (opt (or "#" "_#") (zero-or-more (not ":")) ": ") (message) ":" "\n"
            (zero-or-more (any blank)) (file-name) ":" line ":" column "\n"
            (opt (zero-or-more (any blank)) (file-name) ":" end-line ":" end-column line-end)))
   :modes 'cue-mode
-  :predicate (lambda () (executable-find cue-command))
-  :next-checkers '())
-
+  :predicate (lambda () (executable-find cue-command)))
 (add-to-list 'flycheck-checkers 'cue-checker)
 
 ;;;###autoload
@@ -179,9 +188,9 @@ See URL `https://cuelang.org/'."
   "Major mode for editing CUE files."
   :syntax-table cue-mode-syntax-table
   (set (make-local-variable 'font-lock-defaults)
-	   '(cue-font-lock-keywords
+       '(cue-font-lock-keywords
          nil nil nil nil
-		 (cue-lock-syntactic-face-function . cue-mode--syntactic-face)))
+         (cue-lock-syntactic-face-function . cue-mode--syntactic-face)))
   (setq-local indent-tabs-mode 'only)
   (setq-local tab-width 4)
   (setq-local indent-line-function 'indent-relative)
