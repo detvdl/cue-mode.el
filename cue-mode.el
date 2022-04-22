@@ -184,6 +184,7 @@ See URL `https://cuelang.org/'."
 		 (cue-lock-syntactic-face-function . cue-mode--syntactic-face)))
   (setq-local indent-tabs-mode 'only)
   (setq-local tab-width 4)
+  (setq-local indent-line-function 'indent-relative)
   (setq-local comment-start "//")
   (setq-local comment-end "")
   (when cue-fmt-at-save
