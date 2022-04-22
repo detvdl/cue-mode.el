@@ -56,6 +56,36 @@ Should be `cue' or the complete, absolute path to the `cue' executable on your s
   :group 'cue-mode
   :lighter "CUEfmt")
 
+(defvar cue-mode-keywords (regexp-opt '("import" "package" "len" "close" "and"
+                                        "or" "div" "mod" "quo" "rem") 'symbols))
+
+(defvar cue-mode-types (regexp-opt '("null" "bool" "int" "float" "string" "bytes"
+                                     "number" "uint" "uint8" "int8" "uint16" "int16"
+                                     "rune" "uint32" "int32" "uint64" "int64" "uint128"
+                                     "int128" "float32" "float64") 'symbols))
+
+(defvar cue-mode-comprehension (regexp-opt '("for" "in" "if" "let") 'symbols))
+
+(defconst cue-mode-operators (regexp-opt '("+" "&&" "==" "<" "=" "(" ")" "-" "||"
+                                           "!=" ">" ":" "{" "}" "*" "&" "=~"
+                                           "<=" "?" "[" "]" "," "/" "|" "!~"
+                                           ">=" "!" "_|_" "..." ".")))
+
+(defconst cue-mode-identifiers "\\(_?#?[a-zA-Z]+[a-zA-Z0-9]*\\??\\)[[:space:]]*\\(:|=\\)")
+(defconst cue-mode-quoted-string-re json-mode-quoted-string-re)
+(defconst cue-mode-quoted-key-re json-mode-quoted-key-re)
+(defconst cue-mode-number-re json-mode-number-re)
+(defconst cue-mode-keyword-re json-mode-keyword-re)
+
+(defconst cue-font-lock-keywords
+  `((,cue-mode-keywords . font-lock-keyword-face)
+    (,cue-mode-types . font-lock-type-face)
+    (,cue-mode-comprehension . font-lock-keyword-face)
+    (,cue-mode-operators . font-lock-builtin-face)
+    (,cue-mode-identifiers . (1 font-lock-variable-name-face))
+    (,cue-mode-keyword-re . (1 font-lock-constant-face))
+    (,cue-mode-number-re . (1 font-lock-constant-face))))
+
 ;;;###autoload
 (defconst cue-mode-standard-file-ext '(".cue")
   "List of CUE file extensions.")
@@ -102,17 +132,6 @@ This function calls `cue-mode--update-auto-mode' to change the
 (defvar cue-mode--auto-mode-entry (cue-mode--update-auto-mode cue-mode-auto-mode-list)
   "Regexp generated from the `cue-mode-auto-mode-list'.")
 
-(defconst cue-mode-quoted-string-re json-mode-quoted-string-re)
-(defconst cue-mode-quoted-key-re json-mode-quoted-key-re)
-(defconst cue-mode-number-re json-mode-number-re)
-(defconst cue-mode-keyword-re json-mode-keyword-re)
-
-(defconst cue-font-lock-keywords-1
-  (list
-   (list cue-mode-keyword-re 1 font-lock-constant-face)
-   (list cue-mode-number-re 1 font-lock-constant-face))
-  "Level one font lock.")
-
 (defvar cue-mode-syntax-table
   (let ((st (make-syntax-table json-mode-syntax-table)))
     ;; C-style comments
@@ -138,7 +157,6 @@ cue font lock syntactic face function."
           font-lock-string-face))))
    ((nth 4 state) font-lock-comment-face)))
 
-
 ;; Flycheck checker
 (flycheck-def-executable-var cue-checker cue-command)
 (flycheck-define-command-checker 'cue-checker
@@ -147,7 +165,7 @@ cue font lock syntactic face function."
 See URL `https://cuelang.org/'."
   :command `(,cue-command "vet" source)
   :error-patterns
-  '((error line-start (opt "#" (zero-or-more (not ":")) ": ") (message) ":" "\n"
+  '((error line-start (opt (or "#" "_#") (zero-or-more (not ":")) ": ") (message) ":" "\n"
            (zero-or-more (any blank)) (file-name) ":" line ":" column "\n"
            (opt (zero-or-more (any blank)) (file-name) ":" end-line ":" end-column line-end)))
   :modes 'cue-mode
@@ -161,9 +179,13 @@ See URL `https://cuelang.org/'."
   "Major mode for editing CUE files."
   :syntax-table cue-mode-syntax-table
   (set (make-local-variable 'font-lock-defaults)
-       '(cue-font-lock-keywords-1
+	   '(cue-font-lock-keywords
          nil nil nil nil
-         (cue-lock-syntactic-face-function . cue-mode--syntactic-face)))
+		 (cue-lock-syntactic-face-function . cue-mode--syntactic-face)))
+  (setq-local indent-tabs-mode 'only)
+  (setq-local tab-width 4)
+  (setq-local comment-start "//")
+  (setq-local comment-end "")
   (when cue-fmt-at-save
     (cue-format-on-save-mode)))
 
