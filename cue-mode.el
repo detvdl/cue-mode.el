@@ -140,7 +140,7 @@ cue font lock syntactic face function."
 
 
 ;; Flycheck checker
-(flycheck-def-executable-var cue-checker cue)
+(flycheck-def-executable-var cue-checker cue-command)
 (flycheck-define-command-checker 'cue-checker
   "A CUE syntax checker using the CUE cli command.
 
