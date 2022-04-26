@@ -51,12 +51,6 @@ Should be `cue' or the complete, absolute path to the `cue' executable on your s
   :group 'cue-mode
   :safe 'booleanp)
 
-(defcustom cue-vet-extra-arguments '()
-  "Extra arguments to be passed to `cue vet' commands used in Flycheck."
-  :type '(repeat string)
-  :group 'cue-mode
-  :safe 'listp)
-
 (reformatter-define cue-format
   :program cue-command
   :args '("fmt" "-E" "--strict")
@@ -168,12 +162,21 @@ cue font lock syntactic face function."
    ((nth 4 state) font-lock-comment-face)))
 
 ;; Flycheck checker
+(flycheck-def-option-var flycheck-cue-vet-concrete-types nil cue-checker
+  "Error on non-concrete types. See `cue vet --help'"
+  :safe #'booleanp
+  :type 'boolean)
+
 (flycheck-def-executable-var cue-checker 'cue-command)
+
 (flycheck-define-command-checker 'cue-checker
   "A CUE syntax checker using the CUE cli command.
 
 See URL `https://cuelang.org/'."
-  :command `(,cue-command "vet" ,@cue-vet-extra-arguments source)
+  :command `(,cue-command
+             "vet"
+             (option-flag "-c" flycheck-cue-vet-concrete-types)
+             source)
   :error-patterns
   '((warning line-start (message) "; use the -c flag to show errors or suppress this message"  line-end)
     (error line-start (opt (or "#" "_#") (zero-or-more (not ":")) ": ") (message) ":" "\n"
@@ -181,6 +184,7 @@ See URL `https://cuelang.org/'."
            (opt (zero-or-more (any blank)) (file-name) ":" end-line ":" end-column line-end)))
   :modes 'cue-mode
   :predicate (lambda () (executable-find cue-command)))
+
 (add-to-list 'flycheck-checkers 'cue-checker)
 
 ;;;###autoload
